@@ -7,7 +7,11 @@
 
 typedef struct
 {
-  int foo;
+  unsigned                      numthreads;
+  struct {
+    unsigned                      stack;
+    unsigned                      heap;
+  }                             mem;
 }
 xprocmon_t;
 
