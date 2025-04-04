@@ -10,7 +10,7 @@ int xprocmon_stat
   char path[ 256 ];
   char buf[ 1024 ];
 
-  char*          comm    = 0;
+  char*          comm = 0;
   char           state = 0;
   int            _pid = 0, ppid = 0, pgrp = 0, session = 0, tty_nr = 0,
                  tpgid = 0, exit_signal = 0, processor = 0;
@@ -65,5 +65,7 @@ int xprocmon_stat
       (void)s;
     }
     close(fd);
+    pm->numthreads = num_threads;
   }
+  return 0;
 }
