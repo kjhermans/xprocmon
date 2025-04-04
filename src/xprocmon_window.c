@@ -8,8 +8,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "xprocmon.h"
+
 int xprocmon_window
-  ()
+  (pid_t pid)
 {
   Display* dpy = XOpenDisplay(NULL);
   if (dpy == NULL) 
