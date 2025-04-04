@@ -37,8 +37,12 @@ int xprocmon_window
   XEvent e;
   while (1) 
   {
-    XNextEvent(dpy, &e);
-    if (e.type == Expose) 
+    struct timeval tv = { .tv_sec = 0, .tv_usec = 100000 };
+    int r = XNextEventTimed(dpy, &e, &tv);
+    xprocmon_t pm = { 0 };
+
+    xprocmon_stat(pid, &pm);
+    if (r == False || e.type == Expose) 
     {
       int y_offset = 20;
  
