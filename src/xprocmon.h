@@ -3,6 +3,8 @@
 
 #include <unistd.h>
 
+#include "XNextEventTimed.h"
+
 typedef struct
 {
   int foo;
