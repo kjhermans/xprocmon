@@ -1,5 +1,8 @@
-all:
+all: fnchdr
 	cd src && make
+
+fnchdr:
+	./bin/genfnchdr -i XPROCMON src/ > src/xprocmon_functions.h
 
 clean:
 	cd src && make clean
