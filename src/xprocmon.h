@@ -27,7 +27,7 @@ typedef struct
   xprocmon_t                    points[ XPROCMON_GRAPHSIZE ];
   unsigned                      offset;
   unsigned                      size;
-  unsigned                      grap_height;
+  unsigned                      graph_height;
 }
 xprocmon_data_t;
 
