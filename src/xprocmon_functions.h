@@ -38,6 +38,11 @@ int xprocmon_data
   (pid_t pid, xprocmon_t* pm)
   __attribute__ ((warn_unused_result));
 
+/* declared in src//xprocmon_data_examine.c */
+extern
+void xprocmon_data_examine
+  (xprocmon_data_t* pmd);
+
 /* declared in src//xprocmon_maps.c */
 extern
 int xprocmon_maps
