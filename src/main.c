@@ -45,6 +45,6 @@ int main
   default:
     break;
   }
-  xprocmon_window(pid);
+  CHECK(xprocmon_window(pid));
   return 0;
 }
