@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -9,10 +11,10 @@ int xprocmon_stat
 {
   char path[ 256 ];
   char buf[ 1024 ];
+  char* str = buf;
 
-  char*          comm = 0;
   char           state = 0;
-  int            _pid = 0, ppid = 0, pgrp = 0, session = 0, tty_nr = 0,
+  int            ppid = 0, pgrp = 0, session = 0, tty_nr = 0,
                  tpgid = 0, exit_signal = 0, processor = 0;
   unsigned       flags = 0, rt_priority = 0, policy = 0;
   unsigned long  minflt = 0, cminflt = 0, majflt = 0, cmajflt = 0,
@@ -30,41 +32,52 @@ int xprocmon_stat
   if (fd >= 0) {
     ssize_t r = read(fd, buf, sizeof(buf));
     if (r > -1) {
+      close(fd);
       if (r == sizeof(buf)) { --r; }
       buf[ r ] = 0;
-      int s = scanf(buf,
-        "%d %s %c %d %d %d %d %d %u "
+      str = buf;
+      int _pid = strtol(str, &str, 10); (void)_pid;
+      if (str[ 0 ] == 0) {
+        return ~0;
+      }
+      ++str;
+      str = strchr(str, ' ');
+      if (str[ 0 ] == 0) {
+        return ~0;
+      }
+      ++str;
+      int s = sscanf(str,
+        "%c %d %d %d %d %d %u "
         "%lu %lu %lu %lu "
         "%lu %lu %ld %ld "
         "%ld %ld "
-        "%ld %ld %ld "
+        "%ld %ld %llu "
         "%lu %ld %lu "
         "%lu %lu %lu %lu %lu "
         "%lu %lu %lu %lu %lu "
         "%lu %lu %d "
         "%d %u %u "
-        , _pid
-        , comm
-        , state
-        , ppid
-        , pgrp
-        , session
-        , tty_nr
-        , tpgid
-        , flags
-        , minflt , cminflt , majflt , cmajflt
-        , utime, stime, cutime, cstime
-        , priority, nice
-        , num_threads, itrealvalue, starttime
-        , vsize, rss, rsslim
-        , startcode, endcode, startstack, kstkesp, kstkeip
-        , signal, blocked, sigignore, sigcatch, wchan
-        , nswap, cnswap, exit_signal
-        , processor, rt_priority, policy
+        , &state
+        , &ppid
+        , &pgrp
+        , &session
+        , &tty_nr
+        , &tpgid
+        , &flags
+        , &minflt , &cminflt , &majflt , &cmajflt
+        , &utime, &stime, &cutime, &cstime
+        , &priority, &nice
+        , &num_threads, &itrealvalue, &starttime
+        , &vsize, &rss, &rsslim
+        , &startcode, &endcode, &startstack, &kstkesp, &kstkeip
+        , &signal, &blocked, &sigignore, &sigcatch, &wchan
+        , &nswap, &cnswap, &exit_signal
+        , &processor, &rt_priority, &policy
       );
       (void)s;
     }
-    close(fd);
+    pm->stime = stime;
+    pm->cstime = cstime;
     pm->numthreads = num_threads;
   }
   return 0;
