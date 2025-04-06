@@ -29,14 +29,31 @@ int xprocmon_window
   Atom WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False); 
   XSetWMProtocols(dpy, win, &WM_DELETE_WINDOW, 1);  
 
+  Colormap colormap = DefaultColormap(dpy, 0);
+
+  XColor red, blue;
+
+  char red_bits[] = "#FF0000";
+  XParseColor(dpy, colormap, red_bits, &red);
+  XAllocColor(dpy, colormap, &red);
+
+  char blue_bits[] = "#0000FF";
+  XParseColor(dpy, colormap, blue_bits, &blue);
+  XAllocColor(dpy, colormap, &blue);
+
   XEvent e;
+  xprocmon_data_t pmd = { 0 };
+
   while (1) 
   {
     struct timeval tv = { .tv_sec = 0, .tv_usec = 100000 };
     int r = XNextEventTimed(dpy, &e, &tv);
-    xprocmon_t pm = { 0 };
+    xprocmon_t* pm = &(pmd.points[ pmd.offset ]);
+    int d = xprocmon_data(pid, pm); (void)d;
 
-    int d = xprocmon_data(pid, &pm); (void)d;
+    xprocmon_data_examine(&pmd);
+    ++(pmd.offset);
+    pmd.offset %= XPROCMON_GRAPHSIZE;
 
     if (r == False || e.type == Expose) 
     {
@@ -47,44 +64,32 @@ int xprocmon_window
 
       XSetForeground(dpy, DefaultGC(dpy, s), WhitePixel(dpy, s));
       XFillRectangle(dpy, win, DefaultGC(dpy, s), 0, 0, width, height);
-      XSetForeground(dpy, DefaultGC(dpy, s), BlackPixel(dpy, s));
 
-      int y_offset = 20;
- 
-      const char* s1 = "XProcMon";
-      
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, s1, strlen(s1));
-      y_offset += 20;
+      if (height <= 20) {
+        const char* s1 = "Window is too small";
+        XDrawString(dpy, win, DefaultGC(dpy, s), 10, 15, s1, strlen(s1));
+        continue;
+      }
 
-      char buf[256] = {0};
-        
-      sprintf(buf, "- CSTime: %ld", pm.cstime);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 15;
+      double factor_h = (double)(height - 20) / (double)(pmd.graph_height);
+      double factor_w = (double)(width - 20) / (double)XPROCMON_GRAPHSIZE;
 
-      sprintf(buf, "- STime: %ld", pm.stime);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 15;
+      for (unsigned i = 0; i < XPROCMON_GRAPHSIZE; i++) {
+        unsigned pi = (XPROCMON_GRAPHSIZE + pmd.offset - i) % XPROCMON_GRAPHSIZE;
+        pm = &(pmd.points[ pi ]);
+        unsigned x = width - ((10 + i) * factor_w);
+        if (pm->mem.stack) {
+          unsigned y = height - (10 + (pm->mem.stack * factor_h));
+          XSetForeground(dpy, DefaultGC(dpy, s), red.pixel);
+          XFillRectangle(dpy, win, DefaultGC(dpy, s), x, y, 2, 2);
+        }
+        if (pm->mem.heap) {
+          unsigned y = height - (10 + (pm->mem.heap * factor_h));
+          XSetForeground(dpy, DefaultGC(dpy, s), blue.pixel);
+          XFillRectangle(dpy, win, DefaultGC(dpy, s), x, y, 2, 2);
+        }
+      }
 
-      sprintf(buf, "- # Threads: %u", pm.numthreads);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 15;
-
-      sprintf(buf, "- Stack: %u", pm.mem.stack);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 15;
-        
-      sprintf(buf, "- Heap: %u", pm.mem.heap);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 15;
-
-      sprintf(buf, "- Total: %u", pm.mem.total);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 20;
-
-      sprintf(buf, "Current window size: %dx%d", width, height);
-      XDrawString(dpy, win, DefaultGC(dpy, s), 10, y_offset, buf, strlen(buf));
-      y_offset += 20;
     }
     
     if (e.type == KeyPress)
