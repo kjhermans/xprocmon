@@ -1,38 +1,50 @@
 #ifndef _XPROCMON_H_
 #define _XPROCMON_H_
 
+#include <sys/time.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "XNextEventTimed.h"
 
 typedef struct
 {
+  struct timeval                tv;
+  long                          stime;
+  long                          cstime;
   unsigned                      numthreads;
   struct {
     unsigned                      stack;
     unsigned                      heap;
+    unsigned                      total;
   }                             mem;
 }
 xprocmon_t;
 
-extern
-int xprocmon_window
-  (pid_t pid);
+typedef struct
+{
+#define XPROCMON_GRAPHSIZE      2048
+  xprocmon_t                    points[ XPROCMON_GRAPHSIZE ];
+  unsigned                      offset;
+  unsigned                      size;
+  unsigned                      grap_height;
+}
+xprocmon_data_t;
 
-extern
-int xprocmon_stat
-  (pid_t pid, xprocmon_t* pm);
+#ifdef _DEBUG
+#define DBGMSG(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
+#else
+#define DBGMSG(fmt, ...)
+#endif
 
-extern
-int xprocmon_maps
-  (pid_t pid, xprocmon_t* pm);
+#define CHECK(fnc) { \
+  int __r = (fnc); \
+  if (__r) { \
+    DBGMSG("Error at %s:%d\n", __FILE__, __LINE__); \
+    return __r; \
+  } \
+}
 
-extern
-int absorb_file
-  (char* path, unsigned char** buf, unsigned* buflen);
-
-extern
-char* dup_file_string
-  (char* path);
+#include "xprocmon_functions.h"
 
 #endif
