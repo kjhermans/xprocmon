@@ -59,6 +59,8 @@ int xprocmon_maps
             pm->mem.heap = (map.until - map.from);
           } else if (0 == strcmp(map.file, "[stack]")) {
             pm->mem.stack = (map.until - map.from);
+          } else {
+            pm->mem.total += (map.until - map.from);
           }
         }
       }
